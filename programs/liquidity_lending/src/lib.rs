@@ -21,29 +21,6 @@ pub mod liquidity_lending {
         Ok(())
     }
 
-    // pub fn deposit(ctx: Context<KaminoDeposit>, amount: u64) -> Result<()> {
-    //     let ix = Instruction {
-    //         program_id: ctx.accounts.kamino_program.key(),
-    //         accounts: vec![
-    //             // Fill with Kamino required accounts
-    //         ],
-    //         data: /* Kamino instruction data encoding (use Kamino IDL) */,
-    //     };
-    //
-    //     invoke_signed(
-    //         &ix,
-    //         &[
-    //             ctx.accounts.user.to_account_info(),
-    //             ctx.accounts.kamino_program.clone(),
-    //             ctx.accounts.system_program.to_account_info(),
-    //             // other accounts
-    //         ],
-    //         &[],
-    //     )?;
-    //
-    //     Ok(())
-    // }
-
     pub fn deposit(ctx: Context<KaminoDeposit>, token_max_a: u64, token_max_b: u64) -> Result<()> {
         let cpi_program = ctx.accounts.kamino_lending_program.to_account_info();
 
