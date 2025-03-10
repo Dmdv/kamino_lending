@@ -100,7 +100,7 @@ pub struct Initialize {}
 pub struct KaminoInteraction<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
-    /// Kamino Program Account
+    /// CHECK: Kamino Program Account
     pub kamino_program: AccountInfo<'info>,
     pub system_program: Program<'info, System>,
     // Add Kamino required accounts here
@@ -111,56 +111,56 @@ pub struct KaminoDeposit<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
     #[account(mut)]
-    /// Kamino Strategy Account
+    /// CHECK: Kamino Strategy Account
     pub strategy: AccountInfo<'info>,
-    /// Kamino Global Config Account
+    /// CHECK: Kamino Global Config Account
     pub global_config: AccountInfo<'info>,
-    /// Kamino Pool Account
+    /// CHECK: Kamino Pool Account
     pub pool: AccountInfo<'info>,
-    /// Kamino Position Account
+    /// CHECK: Kamino Position Account
     pub position: AccountInfo<'info>,
-    /// Kamino Tick Array Lower
+    /// CHECK: Kamino Tick Array Lower
     pub tick_array_lower: AccountInfo<'info>,
-    /// Kamino Tick Array Upper
+    /// CHECK: Kamino Tick Array Upper
     pub tick_array_upper: AccountInfo<'info>,
     #[account(mut)]
-    /// Token A Vault
+    /// CHECK: Token A Vault
     pub token_a_vault: AccountInfo<'info>,
     #[account(mut)]
-    /// Token B Vault
+    /// CHECK: Token B Vault
     pub token_b_vault: AccountInfo<'info>,
-    /// Base Vault Authority
+    /// CHECK: Base Vault Authority
     pub base_vault_authority: AccountInfo<'info>,
     #[account(mut)]
-    /// User's Token A ATA
+    /// CHECK: User's Token A ATA
     pub token_a_ata: AccountInfo<'info>,
     #[account(mut)]
-    /// User's Token B ATA
+    /// CHECK: User's Token B ATA
     pub token_b_ata: AccountInfo<'info>,
-    /// Token A Mint
+    /// CHECK: Token A Mint
     pub token_a_mint: AccountInfo<'info>,
-    /// Token B Mint
+    /// CHECK: Token B Mint
     pub token_b_mint: AccountInfo<'info>,
     #[account(mut)]
-    /// User Shares ATA
+    /// CHECK: User Shares ATA
     pub user_shares_ata: AccountInfo<'info>,
     #[account(mut)]
-    /// Shares Mint
+    /// CHECK: Shares Mint
     pub shares_mint: AccountInfo<'info>,
-    /// Shares Mint Authority
+    /// CHECK: Shares Mint Authority
     pub shares_mint_authority: AccountInfo<'info>,
-    /// Scope Prices Account
+    /// CHECK: Scope Prices Account
     pub scope_prices: AccountInfo<'info>,
-    /// Token Infos Account
+    /// CHECK: Token Infos Account
     pub token_infos: AccountInfo<'info>,
-    /// SPL Token Program
+    /// CHECK: SPL Token Program
     pub token_program: AccountInfo<'info>,
-    /// Token A Token Program
+    /// CHECK: Token A Token Program
     pub token_a_token_program: AccountInfo<'info>,
-    /// Token B Token Program
+    /// CHECK: Token B Token Program
     pub token_b_token_program: AccountInfo<'info>,
-    /// Instruction Sysvar Account
+    /// CHECK: Instruction Sysvar Account
     pub instruction_sysvar_account: AccountInfo<'info>,
-    /// Kamino Lending Program
+    /// CHECK: Kamino Lending Program
     pub kamino_lending_program: AccountInfo<'info>,
 }
