@@ -17,9 +17,15 @@ pub mod liquidity_lending {
         pub amount: u64,
     }
 
+    #[derive(AnchorSerialize, AnchorDeserialize)]
+    pub struct Repay {
+        pub amount: u64,
+    }
+
     pub mod instruction {
         pub use super::Deposit;
         pub use super::Borrow;
+        pub use super::Repay;
     }
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
@@ -217,6 +223,56 @@ pub struct KaminoDeposit<'info> {
 
 #[derive(Accounts)]
 pub struct KaminoBorrow<'info> {
+    #[account(mut)]
+    pub user: Signer<'info>,
+
+    #[account(mut)]
+    /// CHECK: external CPI account trusted explicitly
+    pub strategy: AccountInfo<'info>,
+
+    /// CHECK: external CPI account trusted explicitly
+    pub global_config: AccountInfo<'info>,
+
+    #[account(mut)]
+    /// CHECK: external CPI account trusted explicitly
+    pub pool: AccountInfo<'info>,
+
+    #[account(mut)]
+    /// CHECK: external CPI account trusted explicitly
+    pub position: AccountInfo<'info>,
+
+    #[account(mut)]
+    /// CHECK: external CPI account trusted explicitly
+    pub token_vault: AccountInfo<'info>,
+
+    /// CHECK: external CPI account trusted explicitly
+    pub vault_authority: AccountInfo<'info>,
+
+    #[account(mut)]
+    /// CHECK: external CPI account trusted explicitly
+    pub user_token_ata: AccountInfo<'info>,
+
+    /// CHECK: external CPI account trusted explicitly
+    pub token_mint: AccountInfo<'info>,
+
+    /// CHECK: external CPI account trusted explicitly
+    pub scope_prices: AccountInfo<'info>,
+
+    /// CHECK: external CPI account trusted explicitly
+    pub token_infos: AccountInfo<'info>,
+
+    /// CHECK: external CPI account trusted explicitly
+    pub token_program: AccountInfo<'info>,
+
+    /// CHECK: external CPI account trusted explicitly
+    pub instruction_sysvar_account: AccountInfo<'info>,
+
+    /// CHECK: explicitly required CPI program account
+    pub kamino_lending_program: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct KaminoRepay<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
 
