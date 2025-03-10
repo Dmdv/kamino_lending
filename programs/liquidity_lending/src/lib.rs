@@ -70,11 +70,12 @@ pub mod liquidity_lending {
             data: instruction_data,
         };
 
-        let account_infos = cpi_accounts.as_slice();
+        let mut account_infos = cpi_accounts.clone();
+        account_infos.push(cpi_program.clone());
 
         anchor_lang::solana_program::program::invoke(
             &ix,
-            account_infos,
+            &account_infos,
         )?;
 
         Ok(())
