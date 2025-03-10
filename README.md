@@ -8,11 +8,11 @@ This repository provides an example and integration guide for interacting with t
 
 | Resource | Link |
 |----------|------|
-| **Kamino Lending Program ID** | [`6LtLpnUFNByNXLyCoK9wA2MykKAmQNZKBdY8s47dehDc`](https://explorer.solana.com/address/6LtLpnUFNByNXLyCoK9wA2MykKAmQNZKBdY8s47dehDc) |
+| **Kamino Lending Program ID** | [`6LtLpnUFNByNXLyCoK9wA2MykKAmQNZKBdY8s47dehDc`](https://solscan.io/account/KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD#anchorProgramIdl) |
 | **Kamino Lending Anchor IDL (Source)** | [Kamino Lending IDL JSON (GitHub Gist)](https://gist.github.com/Dmdv/523b8fd131a3a7732d2786f90c4ae2d8) |
 | **Anchor Documentation** | [Anchor Book](https://book.anchor-lang.com/) |
 | **Solana Documentation** | [Official Solana Docs](https://docs.solana.com/) |
-| **Anchor CPI Guide** | [Anchor CPI Instructions](https://book.anchor-lang.com/anchor_in_depth/CPIs.html) |
+| **Anchor CPI Guide** | [Anchor CPI Instructions](https://www.anchor-lang.com/docs/basics/idl) |
 
 ---
 
