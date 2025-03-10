@@ -130,51 +130,51 @@ pub mod kamino_cpi_example {
 pub struct KaminoDeposit<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
-    /// external Kamino Lending account
+    /// CHECK: external Kamino Lending account
     pub strategy: AccountInfo<'info>,
-    /// external Kamino Lending account
+    /// CHECK: external Kamino Lending account
     pub global_config: AccountInfo<'info>,
-    /// external Kamino Lending account
+    /// CHECK: external Kamino Lending account
     pub pool: AccountInfo<'info>,
-    /// external Kamino Lending account
+    /// CHECK: external Kamino Lending account
     pub position: AccountInfo<'info>,
-    /// external Kamino Lending account
+    /// CHECK: external Kamino Lending account
     pub tick_array_lower: AccountInfo<'info>,
-    /// external Kamino Lending account
+    /// CHECK: external Kamino Lending account
     pub tick_array_upper: AccountInfo<'info>,
     #[account(mut)]
     pub token_a_vault: AccountInfo<'info>,
     #[account(mut)]
     pub token_b_vault: AccountInfo<'info>,
-    /// external Kamino Lending account
+    /// CHECK: external Kamino Lending account
     pub base_vault_authority: AccountInfo<'info>,
     #[account(mut)]
     pub token_a_ata: AccountInfo<'info>,
     #[account(mut)]
     pub token_b_ata: AccountInfo<'info>,
-    /// external Kamino Lending account
+    /// CHECK: external Kamino Lending account
     pub token_a_mint: AccountInfo<'info>,
-    /// external Kamino Lending account
+    /// CHECK: external Kamino Lending account
     pub token_b_mint: AccountInfo<'info>,
     #[account(mut)]
     pub user_shares_ata: AccountInfo<'info>,
     #[account(mut)]
     pub shares_mint: AccountInfo<'info>,
-    /// external Kamino Lending account
+    /// CHECK: external Kamino Lending account
     pub shares_mint_authority: AccountInfo<'info>,
-    /// external Kamino Lending account
+    /// CHECK: external Kamino Lending account
     pub scope_prices: AccountInfo<'info>,
-    /// external Kamino Lending account
+    /// CHECK: external Kamino Lending account
     pub token_infos: AccountInfo<'info>,
-    /// external Kamino Lending account
+    /// CHECK: external Kamino Lending account
     pub token_program: AccountInfo<'info>,
-    /// external Kamino Lending account
+    /// CHECK: external Kamino Lending account
     pub token_a_token_program: AccountInfo<'info>,
-    /// external Kamino Lending account
+    /// CHECK: external Kamino Lending account
     pub token_b_token_program: AccountInfo<'info>,
-    /// external Kamino Lending account
+    /// CHECK: external Kamino Lending account
     pub instruction_sysvar_account: AccountInfo<'info>,
-    /// Kamino Lending Program
+    /// CHECK: Kamino Lending Program
     pub kamino_program: AccountInfo<'info>,
 }
 ```
