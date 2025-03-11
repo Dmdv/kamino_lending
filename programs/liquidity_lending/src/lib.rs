@@ -35,6 +35,7 @@ pub mod liquidity_lending {
         Ok(())
     }
 
+    // #[instruction(liquidity_amount: u64)]
     pub fn kamino_deposit_reserve_liquidity(
         ctx: Context<KaminoDepositReserveLiquidity>,
         liquidity_amount: u64,
@@ -56,7 +57,7 @@ pub mod liquidity_lending {
             ctx.accounts.instruction_sysvar_account.to_account_info(),
         ];
 
-        let ix_data = liquidity_lending::instruction::DepositReserveLiquidity { liquidity_amount };
+        let ix_data = DepositReserveLiquidity { liquidity_amount };
         let instruction_data = ix_data.try_to_vec()?; // serialize explicitly
 
         let account_metas: Vec<AccountMeta> = cpi_accounts
@@ -184,44 +185,44 @@ pub struct KaminoDepositReserveLiquidity<'info> {
     pub owner: Signer<'info>,
 
     #[account(mut)]
-    /// CHECK: explicitly trusted external CPI account
+    /// CHECK: external CPI program
     pub reserve: AccountInfo<'info>,
 
-    /// CHECK: explicitly trusted external CPI account
+    /// CHECK: external CPI program
     pub lending_market: AccountInfo<'info>,
 
-    /// CHECK: explicitly trusted external CPI account
+    /// CHECK: external CPI program
     pub lending_market_authority: AccountInfo<'info>,
 
-    /// CHECK: explicitly trusted external CPI account
+    /// CHECK: external CPI program
     pub reserve_liquidity_mint: AccountInfo<'info>,
 
     #[account(mut)]
-    /// CHECK: explicitly trusted external CPI account
+    /// CHECK: external CPI program
     pub reserve_liquidity_supply: AccountInfo<'info>,
 
     #[account(mut)]
-    /// CHECK: explicitly trusted external CPI account
+    /// CHECK: external CPI program
     pub reserve_collateral_mint: AccountInfo<'info>,
 
     #[account(mut)]
-    /// CHECK: explicitly trusted external CPI account
+    /// CHECK: external CPI program
     pub user_source_liquidity: AccountInfo<'info>,
 
     #[account(mut)]
-    /// CHECK: explicitly trusted external CPI account
+    /// CHECK: external CPI program
     pub user_destination_collateral: AccountInfo<'info>,
 
-    /// CHECK: explicitly trusted external CPI account
+    /// CHECK: external CPI program
     pub collateral_token_program: AccountInfo<'info>,
 
-    /// CHECK: explicitly trusted external CPI account
+    /// CHECK: external CPI program
     pub liquidity_token_program: AccountInfo<'info>,
 
-    /// CHECK: explicitly trusted external CPI account
+    /// CHECK: external CPI program
     pub instruction_sysvar_account: AccountInfo<'info>,
 
-    /// CHECK: explicitly required Kamino lending CPI program
+    /// CHECK: external Kamino Lending CPI program
     pub kamino_lending_program: AccountInfo<'info>,
 }
 
