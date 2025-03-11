@@ -11,16 +11,9 @@ use anchor_lang::{
 };
 
 use solana_account::Account;
-use borsh::BorshSerialize;
-
-#[derive(BorshSerialize)]
-struct DepositReserveLiquidity {
-    liquidity_amount: u64,
-}
-
 // use liquidity_lending::liquidity_lending::DepositReserveLiquidity;
-use liquidity_lending::liquidity_lending::kamino_deposit_reserve_liquidity;
-use liquidity_lending::{ID as PROGRAM_ID, liquidity_lending::DepositReserveLiquidity};
+// use liquidity_lending::liquidity_lending::kamino_deposit_reserve_liquidity;
+use liquidity_lending::{ID as PROGRAM_ID};
 
 
 #[test]
