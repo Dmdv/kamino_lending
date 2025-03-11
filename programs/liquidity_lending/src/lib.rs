@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use anchor_lang::solana_program::{instruction::Instruction, program::invoke};
 
 declare_id!("56PWFoBr3NtHRAgaAvJaERidrh87e7W4SxjqLzg7ePxZ");
 
@@ -7,25 +8,24 @@ pub mod liquidity_lending {
     use super::*;
 
     #[derive(AnchorSerialize, AnchorDeserialize)]
-    pub struct Deposit {
-        pub token_max_a: u64,
-        pub token_max_b: u64,
+    pub struct BorrowObligationLiquidity {
+        pub liquidity_amount: u64,
     }
 
     #[derive(AnchorSerialize, AnchorDeserialize)]
-    pub struct Borrow {
-        pub amount: u64,
+    pub struct RepayObligationLiquidity {
+        pub liquidity_amount: u64,
     }
 
     #[derive(AnchorSerialize, AnchorDeserialize)]
-    pub struct Repay {
-        pub amount: u64,
+    pub struct DepositReserveLiquidity {
+        pub liquidity_amount: u64,
     }
 
     pub mod instruction {
-        pub use super::Deposit;
-        pub use super::Borrow;
-        pub use super::Repay;
+        pub use super::BorrowObligationLiquidity;
+        pub use super::RepayObligationLiquidity;
+        pub use super::DepositReserveLiquidity;
     }
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
@@ -33,99 +33,42 @@ pub mod liquidity_lending {
         Ok(())
     }
 
-    pub fn deposit(ctx: Context<KaminoDeposit>, token_max_a: u64, token_max_b: u64) -> Result<()> {
+    pub fn kamino_deposit_reserve_liquidity(
+        ctx: Context<KaminoDepositReserveLiquidity>,
+        liquidity_amount: u64,
+    ) -> Result<()> {
         let cpi_program = ctx.accounts.kamino_lending_program.to_account_info();
 
         let cpi_accounts = vec![
-            ctx.accounts.user.to_account_info(),
-            ctx.accounts.strategy.to_account_info(),
-            ctx.accounts.global_config.to_account_info(),
-            ctx.accounts.pool.to_account_info(),
-            ctx.accounts.position.to_account_info(),
-            ctx.accounts.tick_array_lower.to_account_info(),
-            ctx.accounts.tick_array_upper.to_account_info(),
-            ctx.accounts.token_a_vault.to_account_info(),
-            ctx.accounts.token_b_vault.to_account_info(),
-            ctx.accounts.base_vault_authority.to_account_info(),
-            ctx.accounts.token_a_ata.to_account_info(),
-            ctx.accounts.token_b_ata.to_account_info(),
-            ctx.accounts.token_a_mint.to_account_info(),
-            ctx.accounts.token_b_mint.to_account_info(),
-            ctx.accounts.user_shares_ata.to_account_info(),
-            ctx.accounts.shares_mint.to_account_info(),
-            ctx.accounts.shares_mint_authority.to_account_info(),
-            ctx.accounts.scope_prices.to_account_info(),
-            ctx.accounts.token_infos.to_account_info(),
-            ctx.accounts.token_program.to_account_info(),
-            ctx.accounts.token_a_token_program.to_account_info(),
-            ctx.accounts.token_b_token_program.to_account_info(),
+            ctx.accounts.owner.to_account_info(),
+            ctx.accounts.reserve.to_account_info(),
+            ctx.accounts.lending_market.to_account_info(),
+            ctx.accounts.lending_market_authority.to_account_info(),
+            ctx.accounts.reserve_liquidity_mint.to_account_info(),
+            ctx.accounts.reserve_liquidity_supply.to_account_info(),
+            ctx.accounts.reserve_collateral_mint.to_account_info(),
+            ctx.accounts.user_source_liquidity.to_account_info(),
+            ctx.accounts.user_destination_collateral.to_account_info(),
+            ctx.accounts.collateral_token_program.to_account_info(),
+            ctx.accounts.liquidity_token_program.to_account_info(),
             ctx.accounts.instruction_sysvar_account.to_account_info(),
         ];
 
-        let ix_data = liquidity_lending::instruction::Deposit {
-            token_max_a,
-            token_max_b,
-        };
+        let ix_data = liquidity_lending::instruction::DepositReserveLiquidity { liquidity_amount };
+        let instruction_data = ix_data.try_to_vec()?; // serialize explicitly
 
-        let mut instruction_data = vec![];
-        ix_data.serialize(&mut instruction_data)?;
-
-        let ix = anchor_lang::solana_program::instruction::Instruction {
-            program_id: cpi_program.key(),
-            accounts: cpi_accounts.iter().map(|acc| {
-                anchor_lang::solana_program::instruction::AccountMeta {
+        let account_metas: Vec<AccountMeta> = cpi_accounts
+            .iter()
+            .map(|acc| {
+                AccountMeta {
                     pubkey: *acc.key,
                     is_signer: acc.is_signer,
                     is_writable: acc.is_writable,
                 }
-            }).collect(),
-            data: instruction_data,
-        };
+            })
+            .collect();
 
-        let mut account_infos = cpi_accounts.clone();
-        account_infos.push(cpi_program.clone());
-
-        anchor_lang::solana_program::program::invoke(
-            &ix,
-            &account_infos,
-        )?;
-
-        Ok(())
-    }
-
-    pub fn borrow(ctx: Context<KaminoBorrow>, amount: u64) -> Result<()> {
-        let cpi_program = ctx.accounts.kamino_lending_program.to_account_info();
-
-        let cpi_accounts = vec![
-            ctx.accounts.user.to_account_info(),
-            ctx.accounts.strategy.to_account_info(),
-            ctx.accounts.global_config.to_account_info(),
-            ctx.accounts.pool.to_account_info(),
-            ctx.accounts.position.to_account_info(),
-            ctx.accounts.token_vault.to_account_info(),
-            ctx.accounts.vault_authority.to_account_info(),
-            ctx.accounts.user_token_ata.to_account_info(),
-            ctx.accounts.token_mint.to_account_info(),
-            ctx.accounts.scope_prices.to_account_info(),
-            ctx.accounts.token_infos.to_account_info(),
-            ctx.accounts.token_program.to_account_info(),
-            ctx.accounts.instruction_sysvar_account.to_account_info(),
-        ];
-
-        let ix_data = liquidity_lending::instruction::Borrow { amount };
-
-        let mut instruction_data = vec![];
-        ix_data.serialize(&mut instruction_data)?;
-
-        let account_metas: Vec<AccountMeta> = cpi_accounts.iter().map(|acc| {
-            AccountMeta {
-                pubkey: *acc.key,
-                is_signer: acc.is_signer,
-                is_writable: acc.is_writable,
-            }
-        }).collect();
-
-        let ix = anchor_lang::solana_program::instruction::Instruction {
+        let ix = Instruction {
             program_id: cpi_program.key(),
             accounts: account_metas,
             data: instruction_data,
@@ -134,17 +77,99 @@ pub mod liquidity_lending {
         let mut account_infos = cpi_accounts.clone();
         account_infos.push(cpi_program);
 
-        anchor_lang::solana_program::program::invoke(
-            &ix,
-            &account_infos
-        )?;
+        invoke(&ix, &account_infos)?;
 
         Ok(())
     }
 
-    pub fn repay(ctx: Context<KaminoInteraction>, amount: u64) -> Result<()> {
-        // CPI call to Solend/Kamino's repay function
-        // TODO: Implement CPI here
+    pub fn kamino_borrow_obligation_liquidity(
+        ctx: Context<KaminoBorrowObligationLiquidity>,
+        liquidity_amount: u64,
+    ) -> Result<()> {
+        let cpi_program = ctx.accounts.kamino_lending_program.to_account_info();
+
+        let cpi_accounts = vec![
+            ctx.accounts.owner.to_account_info(),
+            ctx.accounts.obligation.to_account_info(),
+            ctx.accounts.lending_market.to_account_info(),
+            ctx.accounts.lending_market_authority.to_account_info(),
+            ctx.accounts.borrow_reserve.to_account_info(),
+            ctx.accounts.borrow_reserve_liquidity_mint.to_account_info(),
+            ctx.accounts.reserve_source_liquidity.to_account_info(),
+            ctx.accounts.borrow_reserve_liquidity_fee_receiver.to_account_info(),
+            ctx.accounts.user_destination_liquidity.to_account_info(),
+            ctx.accounts.referrer_token_state.clone().unwrap_or(ctx.accounts.token_program.clone()).to_account_info(), // optional handling
+            ctx.accounts.token_program.to_account_info(),
+            ctx.accounts.instruction_sysvar_account.to_account_info(),
+        ];
+
+        let ix_data = BorrowObligationLiquidity { liquidity_amount };
+        let instruction_data = ix_data.try_to_vec()?;
+
+        let account_metas: Vec<AccountMeta> = cpi_accounts
+            .iter()
+            .map(|acc| AccountMeta {
+                pubkey: *acc.key,
+                is_signer: acc.is_signer,
+                is_writable: acc.is_writable,
+            })
+            .collect();
+
+        let ix = Instruction {
+            program_id: cpi_program.key(),
+            accounts: account_metas,
+            data: instruction_data,
+        };
+
+        let mut account_infos = cpi_accounts.clone();
+        account_infos.push(cpi_program);
+
+        invoke(&ix, &account_infos)?;
+
+        Ok(())
+    }
+
+    pub fn kamino_repay_obligation_liquidity(
+        ctx: Context<KaminoRepayObligationLiquidity>,
+        liquidity_amount: u64,
+    ) -> Result<()> {
+        let cpi_program = ctx.accounts.kamino_lending_program.to_account_info();
+
+        let cpi_accounts = vec![
+            ctx.accounts.owner.to_account_info(),
+            ctx.accounts.obligation.to_account_info(),
+            ctx.accounts.lending_market.to_account_info(),
+            ctx.accounts.repay_reserve.to_account_info(),
+            ctx.accounts.reserve_liquidity_mint.to_account_info(),
+            ctx.accounts.reserve_destination_liquidity.to_account_info(),
+            ctx.accounts.user_source_liquidity.to_account_info(),
+            ctx.accounts.token_program.to_account_info(),
+            ctx.accounts.instruction_sysvar_account.to_account_info(),
+        ];
+
+        let ix_data = RepayObligationLiquidity { liquidity_amount };
+        let instruction_data = ix_data.try_to_vec()?;
+
+        let account_metas: Vec<AccountMeta> = cpi_accounts
+            .iter()
+            .map(|acc| AccountMeta {
+                pubkey: *acc.key,
+                is_signer: acc.is_signer,
+                is_writable: acc.is_writable,
+            })
+            .collect();
+
+        let ix = Instruction {
+            program_id: cpi_program.key(),
+            accounts: account_metas,
+            data: instruction_data,
+        };
+
+        let mut account_infos = cpi_accounts.clone();
+        account_infos.push(cpi_program);
+
+        invoke(&ix, &account_infos)?;
+
         Ok(())
     }
 }
@@ -153,170 +178,109 @@ pub mod liquidity_lending {
 pub struct Initialize {}
 
 #[derive(Accounts)]
-pub struct KaminoInteraction<'info> {
-    #[account(mut)]
-    pub user: Signer<'info>,
-    /// CHECK: Kamino Program Account
-    pub kamino_program: AccountInfo<'info>,
-    pub system_program: Program<'info, System>,
-    // Add Kamino required accounts here
-}
+pub struct KaminoDepositReserveLiquidity<'info> {
+    pub owner: Signer<'info>,
 
-#[derive(Accounts)]
-pub struct KaminoDeposit<'info> {
     #[account(mut)]
-    pub user: Signer<'info>,
+    /// CHECK: explicitly trusted external CPI account
+    pub reserve: AccountInfo<'info>,
+
+    /// CHECK: explicitly trusted external CPI account
+    pub lending_market: AccountInfo<'info>,
+
+    /// CHECK: explicitly trusted external CPI account
+    pub lending_market_authority: AccountInfo<'info>,
+
+    /// CHECK: explicitly trusted external CPI account
+    pub reserve_liquidity_mint: AccountInfo<'info>,
+
     #[account(mut)]
-    /// CHECK: Kamino Strategy Account
-    pub strategy: AccountInfo<'info>,
-    /// CHECK: Kamino Global Config Account
-    pub global_config: AccountInfo<'info>,
-    /// CHECK: Kamino Pool Account
-    pub pool: AccountInfo<'info>,
-    /// CHECK: Kamino Position Account
-    pub position: AccountInfo<'info>,
-    /// CHECK: Kamino Tick Array Lower
-    pub tick_array_lower: AccountInfo<'info>,
-    /// CHECK: Kamino Tick Array Upper
-    pub tick_array_upper: AccountInfo<'info>,
+    /// CHECK: explicitly trusted external CPI account
+    pub reserve_liquidity_supply: AccountInfo<'info>,
+
     #[account(mut)]
-    /// CHECK: Token A Vault
-    pub token_a_vault: AccountInfo<'info>,
+    /// CHECK: explicitly trusted external CPI account
+    pub reserve_collateral_mint: AccountInfo<'info>,
+
     #[account(mut)]
-    /// CHECK: Token B Vault
-    pub token_b_vault: AccountInfo<'info>,
-    /// CHECK: Base Vault Authority
-    pub base_vault_authority: AccountInfo<'info>,
+    /// CHECK: explicitly trusted external CPI account
+    pub user_source_liquidity: AccountInfo<'info>,
+
     #[account(mut)]
-    /// CHECK: User's Token A ATA
-    pub token_a_ata: AccountInfo<'info>,
-    #[account(mut)]
-    /// CHECK: User's Token B ATA
-    pub token_b_ata: AccountInfo<'info>,
-    /// CHECK: Token A Mint
-    pub token_a_mint: AccountInfo<'info>,
-    /// CHECK: Token B Mint
-    pub token_b_mint: AccountInfo<'info>,
-    #[account(mut)]
-    /// CHECK: User Shares ATA
-    pub user_shares_ata: AccountInfo<'info>,
-    #[account(mut)]
-    /// CHECK: Shares Mint
-    pub shares_mint: AccountInfo<'info>,
-    /// CHECK: Shares Mint Authority
-    pub shares_mint_authority: AccountInfo<'info>,
-    /// CHECK: Scope Prices Account
-    pub scope_prices: AccountInfo<'info>,
-    /// CHECK: Token Infos Account
-    pub token_infos: AccountInfo<'info>,
-    /// CHECK: SPL Token Program
-    pub token_program: AccountInfo<'info>,
-    /// CHECK: Token A Token Program
-    pub token_a_token_program: AccountInfo<'info>,
-    /// CHECK: Token B Token Program
-    pub token_b_token_program: AccountInfo<'info>,
-    /// CHECK: Instruction Sysvar Account
+    /// CHECK: explicitly trusted external CPI account
+    pub user_destination_collateral: AccountInfo<'info>,
+
+    /// CHECK: explicitly trusted external CPI account
+    pub collateral_token_program: AccountInfo<'info>,
+
+    /// CHECK: explicitly trusted external CPI account
+    pub liquidity_token_program: AccountInfo<'info>,
+
+    /// CHECK: explicitly trusted external CPI account
     pub instruction_sysvar_account: AccountInfo<'info>,
-    /// CHECK: Kamino Lending Program
+
+    /// CHECK: explicitly required Kamino lending CPI program
     pub kamino_lending_program: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
-pub struct KaminoBorrow<'info> {
-    #[account(mut)]
-    pub user: Signer<'info>,
-
+pub struct KaminoBorrowObligationLiquidity<'info> {
+    pub owner: Signer<'info>,
     #[account(mut)]
     /// CHECK: external CPI account trusted explicitly
-    pub strategy: AccountInfo<'info>,
-
+    pub obligation: AccountInfo<'info>,
     /// CHECK: external CPI account trusted explicitly
-    pub global_config: AccountInfo<'info>,
-
+    pub lending_market: AccountInfo<'info>,
+    /// CHECK: external CPI account trusted explicitly
+    pub lending_market_authority: AccountInfo<'info>,
     #[account(mut)]
     /// CHECK: external CPI account trusted explicitly
-    pub pool: AccountInfo<'info>,
-
+    pub borrow_reserve: AccountInfo<'info>,
+    /// CHECK: external CPI account trusted explicitly
+    pub borrow_reserve_liquidity_mint: AccountInfo<'info>,
     #[account(mut)]
     /// CHECK: external CPI account trusted explicitly
-    pub position: AccountInfo<'info>,
-
+    pub reserve_source_liquidity: AccountInfo<'info>,
     #[account(mut)]
     /// CHECK: external CPI account trusted explicitly
-    pub token_vault: AccountInfo<'info>,
-
-    /// CHECK: external CPI account trusted explicitly
-    pub vault_authority: AccountInfo<'info>,
-
+    pub borrow_reserve_liquidity_fee_receiver: AccountInfo<'info>,
     #[account(mut)]
     /// CHECK: external CPI account trusted explicitly
-    pub user_token_ata: AccountInfo<'info>,
-
-    /// CHECK: external CPI account trusted explicitly
-    pub token_mint: AccountInfo<'info>,
-
-    /// CHECK: external CPI account trusted explicitly
-    pub scope_prices: AccountInfo<'info>,
-
-    /// CHECK: external CPI account trusted explicitly
-    pub token_infos: AccountInfo<'info>,
-
+    pub user_destination_liquidity: AccountInfo<'info>,
+    #[account(mut)]
+    /// CHECK: optional external CPI account trusted explicitly
+    pub referrer_token_state: Option<AccountInfo<'info>>,
     /// CHECK: external CPI account trusted explicitly
     pub token_program: AccountInfo<'info>,
-
     /// CHECK: external CPI account trusted explicitly
     pub instruction_sysvar_account: AccountInfo<'info>,
-
-    /// CHECK: explicitly required CPI program account
+    /// CHECK: CPI program account explicitly required
     pub kamino_lending_program: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
-pub struct KaminoRepay<'info> {
-    #[account(mut)]
-    pub user: Signer<'info>,
-
+pub struct KaminoRepayObligationLiquidity<'info> {
+    pub owner: Signer<'info>,
     #[account(mut)]
     /// CHECK: external CPI account trusted explicitly
-    pub strategy: AccountInfo<'info>,
-
+    pub obligation: AccountInfo<'info>,
     /// CHECK: external CPI account trusted explicitly
-    pub global_config: AccountInfo<'info>,
-
+    pub lending_market: AccountInfo<'info>,
     #[account(mut)]
     /// CHECK: external CPI account trusted explicitly
-    pub pool: AccountInfo<'info>,
-
+    pub repay_reserve: AccountInfo<'info>,
+    /// CHECK: external CPI account trusted explicitly
+    pub reserve_liquidity_mint: AccountInfo<'info>,
     #[account(mut)]
     /// CHECK: external CPI account trusted explicitly
-    pub position: AccountInfo<'info>,
-
+    pub reserve_destination_liquidity: AccountInfo<'info>,
     #[account(mut)]
     /// CHECK: external CPI account trusted explicitly
-    pub token_vault: AccountInfo<'info>,
-
-    /// CHECK: external CPI account trusted explicitly
-    pub vault_authority: AccountInfo<'info>,
-
-    #[account(mut)]
-    /// CHECK: external CPI account trusted explicitly
-    pub user_token_ata: AccountInfo<'info>,
-
-    /// CHECK: external CPI account trusted explicitly
-    pub token_mint: AccountInfo<'info>,
-
-    /// CHECK: external CPI account trusted explicitly
-    pub scope_prices: AccountInfo<'info>,
-
-    /// CHECK: external CPI account trusted explicitly
-    pub token_infos: AccountInfo<'info>,
-
+    pub user_source_liquidity: AccountInfo<'info>,
     /// CHECK: external CPI account trusted explicitly
     pub token_program: AccountInfo<'info>,
-
     /// CHECK: external CPI account trusted explicitly
     pub instruction_sysvar_account: AccountInfo<'info>,
-
-    /// CHECK: explicitly required CPI program account
+    /// CHECK: CPI program account explicitly required
     pub kamino_lending_program: AccountInfo<'info>,
 }
