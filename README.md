@@ -26,18 +26,6 @@ This IDL defines all instructions, account structures, types, errors, and argume
 
 ---
 
-## 🛠️ Generating Rust CPI Definitions from IDL
-
-You can generate Rust client definitions from the provided IDL using Anchor CLI:
-
-```bash
-anchor client-gen ./idl/kamino_lending_idl.json ./generated_kamino
-```
-
-This command generates Rust structs, instructions, and enums explicitly matching the Kamino Lending IDL.
-
----
-
 ## 🚀 CPI Integration Example
 
 Here's a brief and explicit example of integrating Kamino Lending's `deposit` instruction via CPI in Anchor:
