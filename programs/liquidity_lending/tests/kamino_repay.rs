@@ -93,3 +93,9 @@ fn test_kamino_repay_obligation_liquidity() {
         &checks,
     );
 }
+
+fn serialize_kamino_instruction(instruction_index: u8, amount: &u64) -> Vec<u8> {
+    let mut data = vec![instruction_index];
+    data.extend_from_slice(&amount.to_le_bytes());
+    data
+}

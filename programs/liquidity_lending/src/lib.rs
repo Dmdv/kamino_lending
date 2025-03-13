@@ -51,9 +51,7 @@ pub mod liquidity_lending {
             ctx.accounts.instruction_sysvar_account.to_account_info(),
         ];
 
-        let ix_data = DepositReserveLiquidity { liquidity_amount };
-        let instruction_data = ix_data.try_to_vec()?; // serialize explicitly
-
+        let instruction_data= serialize_kamino_instruction(13, &liquidity_amount);
         msg!("Serialized instruction data: {:?}", instruction_data);
 
         let account_metas: Vec<AccountMeta> = cpi_accounts
@@ -87,8 +85,6 @@ pub mod liquidity_lending {
         ctx: Context<KaminoBorrowObligationLiquidity>,
         liquidity_amount: u64,
     ) -> Result<()> {
-        let cpi_program = ctx.accounts.kamino_lending_program.to_account_info();
-
         let cpi_accounts = vec![
             ctx.accounts.owner.to_account_info(),
             ctx.accounts.obligation.to_account_info(),
@@ -104,8 +100,7 @@ pub mod liquidity_lending {
             ctx.accounts.instruction_sysvar_account.to_account_info(),
         ];
 
-        let ix_data = BorrowObligationLiquidity { liquidity_amount };
-        let instruction_data = ix_data.try_to_vec()?;
+        let instruction_data= serialize_kamino_instruction(23, &liquidity_amount);
 
         let account_metas: Vec<AccountMeta> = cpi_accounts
             .iter()
@@ -117,7 +112,7 @@ pub mod liquidity_lending {
             .collect();
 
         let ix = Instruction {
-            program_id: cpi_program.key(),
+            program_id: ctx.accounts.kamino_lending_program.key(),
             accounts: account_metas,
             data: instruction_data,
         };
@@ -148,8 +143,7 @@ pub mod liquidity_lending {
             ctx.accounts.instruction_sysvar_account.to_account_info(),
         ];
 
-        let ix_data = RepayObligationLiquidity { liquidity_amount };
-        let instruction_data = ix_data.try_to_vec()?;
+        let instruction_data= serialize_kamino_instruction(25, &liquidity_amount);
 
         let account_metas: Vec<AccountMeta> = cpi_accounts
             .iter()
@@ -284,4 +278,10 @@ pub struct KaminoRepayObligationLiquidity<'info> {
     pub instruction_sysvar_account: AccountInfo<'info>,
     /// CHECK: CPI program account explicitly required
     pub kamino_lending_program: AccountInfo<'info>,
+}
+
+fn serialize_kamino_instruction(instruction_index: u8, amount: &u64) -> Vec<u8> {
+    let mut data = vec![instruction_index];
+    data.extend_from_slice(&amount.to_le_bytes());
+    data
 }
