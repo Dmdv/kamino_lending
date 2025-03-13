@@ -24,12 +24,6 @@ pub mod liquidity_lending {
         pub liquidity_amount: u64,
     }
 
-    pub mod instruction {
-        pub use super::BorrowObligationLiquidity;
-        pub use super::RepayObligationLiquidity;
-        pub use super::DepositReserveLiquidity;
-    }
-
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
         msg!("Greetings from: {:?}", ctx.program_id);
         Ok(())
@@ -60,6 +54,8 @@ pub mod liquidity_lending {
         let ix_data = DepositReserveLiquidity { liquidity_amount };
         let instruction_data = ix_data.try_to_vec()?; // serialize explicitly
 
+        msg!("Serialized instruction data: {:?}", instruction_data);
+
         let account_metas: Vec<AccountMeta> = cpi_accounts
             .iter()
             .map(|acc| {
@@ -77,10 +73,12 @@ pub mod liquidity_lending {
             data: instruction_data,
         };
 
-        let mut account_infos = cpi_accounts.clone();
-        account_infos.push(cpi_program);
+        let account_infos = cpi_accounts.clone();
+        // account_infos.push(cpi_program);
 
-        invoke(&ix, &account_infos)?;
+        invoke(
+            &ix,
+            &account_infos)?;
 
         Ok(())
     }
@@ -124,8 +122,8 @@ pub mod liquidity_lending {
             data: instruction_data,
         };
 
-        let mut account_infos = cpi_accounts.clone();
-        account_infos.push(cpi_program);
+        let account_infos = cpi_accounts.clone();
+        // account_infos.push(cpi_program);
 
         invoke(&ix, &account_infos)?;
 
@@ -168,8 +166,8 @@ pub mod liquidity_lending {
             data: instruction_data,
         };
 
-        let mut account_infos = cpi_accounts.clone();
-        account_infos.push(cpi_program);
+        let account_infos = cpi_accounts.clone();
+        // account_infos.push(cpi_program);
 
         invoke(&ix, &account_infos)?;
 

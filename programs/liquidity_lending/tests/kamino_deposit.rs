@@ -2,8 +2,6 @@ use std::path::PathBuf;
 use mollusk_svm::{Mollusk, result::Check};
 use anchor_lang::{
     prelude::*,
-    // InstructionData,
-    // ToAccountMetas,
     solana_program::{
         sysvar,
         instruction::Instruction,
@@ -11,10 +9,7 @@ use anchor_lang::{
 };
 
 use solana_account::Account;
-// use liquidity_lending::liquidity_lending::DepositReserveLiquidity;
-// use liquidity_lending::liquidity_lending::kamino_deposit_reserve_liquidity;
 use liquidity_lending::{ID as PROGRAM_ID};
-
 
 #[test]
 fn test_kamino_deposit_reserve_liquidity() {
@@ -67,7 +62,7 @@ fn test_kamino_deposit_reserve_liquidity() {
     let mut instruction_data = Vec::new();
 
     // Calculate the discriminator for your program's instruction
-    let sighash = anchor_lang::solana_program::hash::hash(b"global:kamino_deposit_reserve_liquidity");
+    let sighash = anchor_lang::solana_program::hash::hash(b"global:depositReserveLiquidity");
     let discriminator = &sighash.to_bytes()[..8];
     instruction_data.extend_from_slice(discriminator);
 

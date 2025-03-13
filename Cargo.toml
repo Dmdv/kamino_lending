@@ -1,7 +1,6 @@
 [workspace]
 members = [
-#    "programs/*"
-    "programs/liquidity_lending"
+    "programs/*"
 ]
 resolver = "2"
 

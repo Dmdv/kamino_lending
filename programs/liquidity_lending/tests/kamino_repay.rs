@@ -31,7 +31,7 @@ fn test_kamino_repay_obligation_liquidity() {
     let liquidity_amount: u64 = 1_000_000_000;
 
     // Calculate the discriminator for your program's instruction
-    let sighash = anchor_lang::solana_program::hash::hash(b"global:kamino_repay_obligation_liquidity");
+    let sighash = anchor_lang::solana_program::hash::hash(b"global:repayObligationLiquidity");
     let discriminator = &sighash.to_bytes()[..8];
 
     // Create instruction data with proper Anchor discriminator

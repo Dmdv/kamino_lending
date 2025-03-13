@@ -36,7 +36,7 @@ fn test_kamino_borrow_obligation_liquidity() {
     let liquidity_amount: u64 = 1_000_000_000;
 
     // Calculate the discriminator for your program's instruction
-    let sighash = anchor_lang::solana_program::hash::hash(b"global:kamino_borrow_obligation_liquidity");
+    let sighash = anchor_lang::solana_program::hash::hash(b"global:borrowObligationLiquidity");
     let discriminator = &sighash.to_bytes()[..8];
 
     // Create instruction data with proper Anchor discriminator
@@ -123,4 +123,11 @@ fn test_kamino_borrow_obligation_liquidity() {
         &mollusk_accounts,
         &checks,
     );
+}
+
+// Helper function to serialize instruction data for Kamino
+fn serialize_kamino_instruction(instruction_index: u8, amount: &u64) -> Vec<u8> {
+    let mut data = vec![instruction_index];
+    data.extend_from_slice(&amount.to_le_bytes());
+    data
 }
