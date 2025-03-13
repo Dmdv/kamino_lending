@@ -1,15 +1,16 @@
 use std::path::PathBuf;
 use mollusk_svm::{Mollusk, result::Check};
-use anchor_lang::{
-    prelude::*,
-    solana_program::{
-        instruction::Instruction,
-        sysvar,
-    }
-};
-use solana_account::Account;
-use liquidity_lending::{ID as PROGRAM_ID};
+use anchor_lang::{prelude::*, solana_program::{
+    instruction::Instruction,
+    sysvar,
+}, InstructionData};
 
+use solana_account::Account;
+
+use liquidity_lending::{
+    ID as PROGRAM_ID,
+    instruction::KaminoRepayObligationLiquidity
+};
 
 #[test]
 fn test_kamino_repay_obligation_liquidity() {
@@ -27,20 +28,6 @@ fn test_kamino_repay_obligation_liquidity() {
     let instruction_sysvar_pubkey = sysvar::instructions::id();
     let kamino_lending_program_pubkey = Pubkey::new_unique();
 
-    // Set repay amount
-    let liquidity_amount: u64 = 1_000_000_000;
-
-    // Calculate the discriminator for your program's instruction
-    let sighash = anchor_lang::solana_program::hash::hash(b"global:repayObligationLiquidity");
-    let discriminator = &sighash.to_bytes()[..8];
-
-    // Create instruction data with proper Anchor discriminator
-    let mut instruction_data = Vec::new();
-    instruction_data.extend_from_slice(discriminator);
-
-    // Add the liquidity_amount parameter
-    instruction_data.extend_from_slice(&liquidity_amount.to_le_bytes());
-
     // Build accounts required by the instruction
     let accounts = vec![
         AccountMeta::new_readonly(owner_pubkey, true),
@@ -55,11 +42,16 @@ fn test_kamino_repay_obligation_liquidity() {
         AccountMeta::new_readonly(kamino_lending_program_pubkey, false),
     ];
 
+    // Set repay amount
+    let liquidity_amount: u64 = 1_000_000_000;
+
     // Create the instruction
     let instruction = Instruction {
         program_id,
         accounts,
-        data: instruction_data,
+        data: KaminoRepayObligationLiquidity {
+            liquidity_amount,
+        }.data(),
     };
 
     // Define account states for testing

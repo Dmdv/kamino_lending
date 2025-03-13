@@ -1,15 +1,16 @@
 use std::path::PathBuf;
 use mollusk_svm::{Mollusk, result::Check};
-use anchor_lang::{
-    prelude::*,
-    solana_program::{
-        sysvar,
-        instruction::Instruction,
-    }
-};
+use anchor_lang::{prelude::*, solana_program::{
+    sysvar,
+    instruction::Instruction,
+}, InstructionData};
 
 use solana_account::Account;
-use liquidity_lending::{ID as PROGRAM_ID};
+
+use liquidity_lending::{
+    ID as PROGRAM_ID,
+    instruction::KaminoDepositReserveLiquidity
+};
 
 #[test]
 fn test_kamino_deposit_reserve_liquidity() {
@@ -30,16 +31,6 @@ fn test_kamino_deposit_reserve_liquidity() {
     let kamino_lending_program_pubkey = Pubkey::new_unique();
     // let system_program_pubkey = system_program::ID;
 
-    // Set initial liquidity amount
-    let liquidity_amount: u64 = 1_000_000_000;
-
-    // Serialize the instruction data using Anchor's generated instruction data
-    // let ix_data = DepositReserveLiquidity {
-    //     liquidity_amount,
-    // };
-    //
-    // let instruction_data = ix_data.try_to_vec().unwrap(); // serialize explicitly
-
     // Build CPI accounts required by the instruction
     let accounts = vec![
         AccountMeta::new_readonly(owner_pubkey, true),
@@ -58,22 +49,16 @@ fn test_kamino_deposit_reserve_liquidity() {
         // AccountMeta::new_readonly(system_program_pubkey, false),
     ];
 
-    // Create instruction data with proper Anchor discriminator for your program's instruction
-    let mut instruction_data = Vec::new();
-
-    // Calculate the discriminator for your program's instruction
-    let sighash = anchor_lang::solana_program::hash::hash(b"global:depositReserveLiquidity");
-    let discriminator = &sighash.to_bytes()[..8];
-    instruction_data.extend_from_slice(discriminator);
-
-    // Add the liquidity_amount parameter
-    instruction_data.extend_from_slice(&liquidity_amount.to_le_bytes());
+    // Set initial liquidity amount
+    let liquidity_amount: u64 = 1_000_000_000;
 
     // Create the instruction
     let instruction = Instruction {
         program_id,
         accounts,
-        data: instruction_data,
+        data: KaminoDepositReserveLiquidity {
+            liquidity_amount,
+        }.data()
     };
 
     // Define account states for testing
