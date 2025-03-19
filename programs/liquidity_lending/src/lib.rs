@@ -5,6 +5,22 @@ use anchor_lang::solana_program::{instruction::Instruction, program::invoke};
 
 declare_id!("56PWFoBr3NtHRAgaAvJaERidrh87e7W4SxjqLzg7ePxZ");
 
+/// Custom errors for the program
+#[error_code]
+pub enum LendingError {
+    #[msg("Invalid amount provided")]
+    InvalidAmount,
+    #[msg("Insufficient funds")]
+    InsufficientFunds,
+    #[msg("Invalid account state")]
+    InvalidAccountState,
+    #[msg("Invalid program ID")]
+    InvalidProgramId,
+    #[msg("Invalid instruction data")]
+    InvalidInstructionData,
+}
+
+/// Program for interacting with Kamino lending protocol
 #[program]
 pub mod liquidity_lending {
     use super::*;
@@ -24,17 +40,31 @@ pub mod liquidity_lending {
         pub liquidity_amount: u64,
     }
 
+    /// Initialize the program
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        msg!("Greetings from: {:?}", ctx.program_id);
+        msg!("Initializing liquidity lending program");
         Ok(())
     }
 
-    // #[instruction(liquidity_amount: u64)]
+    /// Deposit liquidity into a Kamino reserve
+    /// 
+    /// # Arguments
+    /// * `ctx` - The context of accounts
+    /// * `liquidity_amount` - Amount of liquidity to deposit
     pub fn kamino_deposit_reserve_liquidity(
         ctx: Context<KaminoDepositReserveLiquidity>,
         liquidity_amount: u64,
     ) -> Result<()> {
+        // Validate amount
+        require!(liquidity_amount > 0, LendingError::InvalidAmount);
+
         let cpi_program = ctx.accounts.kamino_lending_program.to_account_info();
+
+        // Validate program ID
+        require!(
+            cpi_program.key() == ctx.accounts.kamino_lending_program.key(),
+            LendingError::InvalidProgramId
+        );
 
         let cpi_accounts = vec![
             ctx.accounts.owner.to_account_info(),
@@ -51,17 +81,14 @@ pub mod liquidity_lending {
             ctx.accounts.instruction_sysvar_account.to_account_info(),
         ];
 
-        let instruction_data= serialize_kamino_instruction(13, &liquidity_amount);
-        msg!("Serialized instruction data: {:?}", instruction_data);
+        let instruction_data = serialize_kamino_instruction(13, &liquidity_amount)?;
 
         let account_metas: Vec<AccountMeta> = cpi_accounts
             .iter()
-            .map(|acc| {
-                AccountMeta {
-                    pubkey: *acc.key,
-                    is_signer: acc.is_signer,
-                    is_writable: acc.is_writable,
-                }
+            .map(|acc| AccountMeta {
+                pubkey: *acc.key,
+                is_signer: acc.is_signer,
+                is_writable: acc.is_writable,
             })
             .collect();
 
@@ -71,20 +98,24 @@ pub mod liquidity_lending {
             data: instruction_data,
         };
 
-        let account_infos = cpi_accounts.clone();
-        // account_infos.push(cpi_program);
+        invoke(&ix, &cpi_accounts)?;
 
-        invoke(
-            &ix,
-            &account_infos)?;
-
+        msg!("Successfully deposited {} liquidity", liquidity_amount);
         Ok(())
     }
 
+    /// Borrow liquidity from a Kamino reserve
+    /// 
+    /// # Arguments
+    /// * `ctx` - The context of accounts
+    /// * `liquidity_amount` - Amount of liquidity to borrow
     pub fn kamino_borrow_obligation_liquidity(
         ctx: Context<KaminoBorrowObligationLiquidity>,
         liquidity_amount: u64,
     ) -> Result<()> {
+        // Validate amount
+        require!(liquidity_amount > 0, LendingError::InvalidAmount);
+
         let cpi_accounts = vec![
             ctx.accounts.owner.to_account_info(),
             ctx.accounts.obligation.to_account_info(),
@@ -95,12 +126,12 @@ pub mod liquidity_lending {
             ctx.accounts.reserve_source_liquidity.to_account_info(),
             ctx.accounts.borrow_reserve_liquidity_fee_receiver.to_account_info(),
             ctx.accounts.user_destination_liquidity.to_account_info(),
-            ctx.accounts.referrer_token_state.clone().unwrap_or(ctx.accounts.token_program.clone()).to_account_info(), // optional handling
+            ctx.accounts.referrer_token_state.clone().unwrap_or(ctx.accounts.token_program.clone()).to_account_info(),
             ctx.accounts.token_program.to_account_info(),
             ctx.accounts.instruction_sysvar_account.to_account_info(),
         ];
 
-        let instruction_data= serialize_kamino_instruction(23, &liquidity_amount);
+        let instruction_data = serialize_kamino_instruction(23, &liquidity_amount)?;
 
         let account_metas: Vec<AccountMeta> = cpi_accounts
             .iter()
@@ -117,19 +148,31 @@ pub mod liquidity_lending {
             data: instruction_data,
         };
 
-        let account_infos = cpi_accounts.clone();
-        // account_infos.push(cpi_program);
+        invoke(&ix, &cpi_accounts)?;
 
-        invoke(&ix, &account_infos)?;
-
+        msg!("Successfully borrowed {} liquidity", liquidity_amount);
         Ok(())
     }
 
+    /// Repay borrowed liquidity to a Kamino reserve
+    /// 
+    /// # Arguments
+    /// * `ctx` - The context of accounts
+    /// * `liquidity_amount` - Amount of liquidity to repay
     pub fn kamino_repay_obligation_liquidity(
         ctx: Context<KaminoRepayObligationLiquidity>,
         liquidity_amount: u64,
     ) -> Result<()> {
+        // Validate amount
+        require!(liquidity_amount > 0, LendingError::InvalidAmount);
+
         let cpi_program = ctx.accounts.kamino_lending_program.to_account_info();
+
+        // Validate program ID
+        require!(
+            cpi_program.key() == ctx.accounts.kamino_lending_program.key(),
+            LendingError::InvalidProgramId
+        );
 
         let cpi_accounts = vec![
             ctx.accounts.owner.to_account_info(),
@@ -143,7 +186,7 @@ pub mod liquidity_lending {
             ctx.accounts.instruction_sysvar_account.to_account_info(),
         ];
 
-        let instruction_data= serialize_kamino_instruction(25, &liquidity_amount);
+        let instruction_data = serialize_kamino_instruction(25, &liquidity_amount)?;
 
         let account_metas: Vec<AccountMeta> = cpi_accounts
             .iter()
@@ -160,11 +203,9 @@ pub mod liquidity_lending {
             data: instruction_data,
         };
 
-        let account_infos = cpi_accounts.clone();
-        // account_infos.push(cpi_program);
+        invoke(&ix, &cpi_accounts)?;
 
-        invoke(&ix, &account_infos)?;
-
+        msg!("Successfully repaid {} liquidity", liquidity_amount);
         Ok(())
     }
 }
@@ -174,114 +215,173 @@ pub struct Initialize {}
 
 #[derive(Accounts)]
 pub struct KaminoDepositReserveLiquidity<'info> {
+    /// The account paying for the deposit
     pub owner: Signer<'info>,
 
+    /// The reserve account to deposit into
     #[account(mut)]
-    /// CHECK: external CPI program
+    /// CHECK: Validated by Kamino program
     pub reserve: AccountInfo<'info>,
 
-    /// CHECK: external CPI program
+    /// The lending market account
+    /// CHECK: Validated by Kamino program
     pub lending_market: AccountInfo<'info>,
 
-    /// CHECK: external CPI program
+    /// The lending market authority account
+    /// CHECK: Validated by Kamino program
     pub lending_market_authority: AccountInfo<'info>,
 
-    /// CHECK: external CPI program
+    /// The reserve's liquidity mint
+    /// CHECK: Validated by Kamino program
     pub reserve_liquidity_mint: AccountInfo<'info>,
 
+    /// The reserve's liquidity supply account
     #[account(mut)]
-    /// CHECK: external CPI program
+    /// CHECK: Validated by Kamino program
     pub reserve_liquidity_supply: AccountInfo<'info>,
 
+    /// The reserve's collateral mint
     #[account(mut)]
-    /// CHECK: external CPI program
+    /// CHECK: Validated by Kamino program
     pub reserve_collateral_mint: AccountInfo<'info>,
 
+    /// The user's source liquidity account
     #[account(mut)]
-    /// CHECK: external CPI program
+    /// CHECK: Validated by Kamino program
     pub user_source_liquidity: AccountInfo<'info>,
 
+    /// The user's destination collateral account
     #[account(mut)]
-    /// CHECK: external CPI program
+    /// CHECK: Validated by Kamino program
     pub user_destination_collateral: AccountInfo<'info>,
 
-    /// CHECK: external CPI program
+    /// The collateral token program
+    /// CHECK: Validated by Kamino program
     pub collateral_token_program: AccountInfo<'info>,
 
-    /// CHECK: external CPI program
+    /// The liquidity token program
+    /// CHECK: Validated by Kamino program
     pub liquidity_token_program: AccountInfo<'info>,
 
-    /// CHECK: external CPI program
+    /// The instruction sysvar account
+    /// CHECK: Validated by Kamino program
     pub instruction_sysvar_account: AccountInfo<'info>,
 
-    /// CHECK: external Kamino Lending CPI program
+    /// The Kamino lending program
+    /// CHECK: Validated by program ID check
     pub kamino_lending_program: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
 pub struct KaminoBorrowObligationLiquidity<'info> {
+    /// The account paying for the borrow
     pub owner: Signer<'info>,
+
+    /// The obligation account
     #[account(mut)]
-    /// CHECK: external CPI account trusted explicitly
+    /// CHECK: Validated by Kamino program
     pub obligation: AccountInfo<'info>,
-    /// CHECK: external CPI account trusted explicitly
+
+    /// The lending market account
+    /// CHECK: Validated by Kamino program
     pub lending_market: AccountInfo<'info>,
-    /// CHECK: external CPI account trusted explicitly
+
+    /// The lending market authority account
+    /// CHECK: Validated by Kamino program
     pub lending_market_authority: AccountInfo<'info>,
+
+    /// The reserve to borrow from
     #[account(mut)]
-    /// CHECK: external CPI account trusted explicitly
+    /// CHECK: Validated by Kamino program
     pub borrow_reserve: AccountInfo<'info>,
-    /// CHECK: external CPI account trusted explicitly
+
+    /// The reserve's liquidity mint
+    /// CHECK: Validated by Kamino program
     pub borrow_reserve_liquidity_mint: AccountInfo<'info>,
+
+    /// The reserve's source liquidity account
     #[account(mut)]
-    /// CHECK: external CPI account trusted explicitly
+    /// CHECK: Validated by Kamino program
     pub reserve_source_liquidity: AccountInfo<'info>,
+
+    /// The reserve's liquidity fee receiver account
     #[account(mut)]
-    /// CHECK: external CPI account trusted explicitly
+    /// CHECK: Validated by Kamino program
     pub borrow_reserve_liquidity_fee_receiver: AccountInfo<'info>,
+
+    /// The user's destination liquidity account
     #[account(mut)]
-    /// CHECK: external CPI account trusted explicitly
+    /// CHECK: Validated by Kamino program
     pub user_destination_liquidity: AccountInfo<'info>,
+
+    /// Optional referrer token state account
     #[account(mut)]
-    /// CHECK: optional external CPI account trusted explicitly
+    /// CHECK: Validated by Kamino program
     pub referrer_token_state: Option<AccountInfo<'info>>,
-    /// CHECK: external CPI account trusted explicitly
+
+    /// The token program
+    /// CHECK: Validated by Kamino program
     pub token_program: AccountInfo<'info>,
-    /// CHECK: external CPI account trusted explicitly
+
+    /// The instruction sysvar account
+    /// CHECK: Validated by Kamino program
     pub instruction_sysvar_account: AccountInfo<'info>,
-    /// CHECK: CPI program account explicitly required
+
+    /// The Kamino lending program
+    /// CHECK: Validated by program ID check
     pub kamino_lending_program: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
 pub struct KaminoRepayObligationLiquidity<'info> {
+    /// The account paying for the repay
     pub owner: Signer<'info>,
+
+    /// The obligation account
     #[account(mut)]
-    /// CHECK: external CPI account trusted explicitly
+    /// CHECK: Validated by Kamino program
     pub obligation: AccountInfo<'info>,
-    /// CHECK: external CPI account trusted explicitly
+
+    /// The lending market account
+    /// CHECK: Validated by Kamino program
     pub lending_market: AccountInfo<'info>,
+
+    /// The reserve to repay to
     #[account(mut)]
-    /// CHECK: external CPI account trusted explicitly
+    /// CHECK: Validated by Kamino program
     pub repay_reserve: AccountInfo<'info>,
-    /// CHECK: external CPI account trusted explicitly
+
+    /// The reserve's liquidity mint
+    /// CHECK: Validated by Kamino program
     pub reserve_liquidity_mint: AccountInfo<'info>,
+
+    /// The reserve's destination liquidity account
     #[account(mut)]
-    /// CHECK: external CPI account trusted explicitly
+    /// CHECK: Validated by Kamino program
     pub reserve_destination_liquidity: AccountInfo<'info>,
+
+    /// The user's source liquidity account
     #[account(mut)]
-    /// CHECK: external CPI account trusted explicitly
+    /// CHECK: Validated by Kamino program
     pub user_source_liquidity: AccountInfo<'info>,
-    /// CHECK: external CPI account trusted explicitly
+
+    /// The token program
+    /// CHECK: Validated by Kamino program
     pub token_program: AccountInfo<'info>,
-    /// CHECK: external CPI account trusted explicitly
+
+    /// The instruction sysvar account
+    /// CHECK: Validated by Kamino program
     pub instruction_sysvar_account: AccountInfo<'info>,
-    /// CHECK: CPI program account explicitly required
+
+    /// The Kamino lending program
+    /// CHECK: Validated by program ID check
     pub kamino_lending_program: AccountInfo<'info>,
 }
 
-fn serialize_kamino_instruction(instruction_index: u8, amount: &u64) -> Vec<u8> {
-    let mut data = vec![instruction_index];
+/// Serialize a Kamino instruction with the given index and amount
+fn serialize_kamino_instruction(instruction_index: u8, amount: &u64) -> Result<Vec<u8>> {
+    let mut data = Vec::new();
+    data.push(instruction_index);
     data.extend_from_slice(&amount.to_le_bytes());
-    data
+    Ok(data)
 }
